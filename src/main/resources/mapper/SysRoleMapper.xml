@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.cj.jtsys.sys.dao.SysRoleDao">
+
+    <update id="updateObject" parameterType="com.cj.jtsys.sys.entity.SysRole">
+        update sys_roles
+        set
+            name=#{name},
+            note=#{note},
+            modifiedUser=#{modifiedUser},
+            modifiedTime=now();
+
+        where id=#{id}
+    </update>
+
+
+
+<!--    关联查询-->
+<!--    先进行findObjectById-->
+<!--   再进行子查询-->
+
+    <resultMap id="sysRoleMenuVo" type="com.cj.jtsys.sys.vo.SysRoleMenuVo">
+<!--        role_name表示数据库表里面的表名-->
+<!--        <result property="name" column= "role_name" />-->
+        <id column="id" property="id"/>
+<!--        下面语句要用到id，id数据会丢失，这里要用id column保存下来-->
+<!--        进行嵌套查询，-->
+        <!--                            基于sysRoleMenuVo里面的id（column）进行嵌套查询,查询语句来自findMenuIdsByRoleId，查出来的结构是MenuIDs-->
+<!--        collection的意思是查出来的menuIds是一个collection-->
+                <collection property="menuIds"
+                            column="id"
+                            select="com.cj.jtsys.sys.dao.SysRoleMenuDao.findMenuIdsByRoleId">
+
+                </collection>
+    </resultMap>
+
+
+<!--    将查询结果封装到sysRoleMenuVo这个map中，但是这个map不是Vo类，只是个名字正好像而已-->
+    <select id="findObjectById" resultMap="sysRoleMenuVo">
+        select id,name,note
+        from sys_roles
+        where id=#{id}
+
+    </select>
+
+
+<!--    持久化角色自身信息-->
+    <!--      useGeneratedKeys要使用插入以后产生的自增长的Id,赋值参数对象的到id属性上      -->
+    <insert id="insertObject"
+            parameterType="com.cj.jtsys.sys.entity.SysRole"
+            useGeneratedKeys="true"
+            keyProperty="id">
+         insert into sys_roles
+         (id,name,note,createdTime,modifiedTime,
+         createdUser,modifiedUser)
+         values
+         (null,#{name},#{note},now(),now(),
+         #{createdUser},#{modifiedUser})
+    </insert>
+
+
+    <sql id="queryWhereId">
+        from sys_roles
+        <where>
+        <if test="name!=null and name!=''">
+            name like concat("%",#{name},"%")
+        </if>
+        </where>
+
+    </sql>
+    
+    
+    <select id="getRowCount"
+            resultType="int">
+        select  count(*)
+       <include refid="queryWhereId"></include>
+    </select>
+
+
+    <select id="findPageObjects" resultType="com.cj.jtsys.sys.entity.SysRole">
+            select *
+
+            <include refid="queryWhereId"></include>
+
+            order by createdTime desc
+            limit #{startIndex},#{pageSize}
+    </select>
+
+
+<!--    <delete id="deleteObjects" >-->
+<!--      delete  from sys_logs-->
+<!--      <if test="ids==null || ids.length==0">-->
+<!--      where id=-1-->
+<!--      </if>-->
+<!--      <if test="ids!=null and ids.length>0">-->
+<!--                where id in-->
+<!--&#45;&#45;                 ids是dao上入口参数@Param定义的名字集合-->
+<!--                <foreach collection="ids"-->
+<!--                         open="("-->
+<!--                         close=")"-->
+<!--                         separator=","-->
+<!--                         item="id">-->
+<!--                    #{id}-->
+<!--    </foreach>-->
+<!--      </if>-->
+<!--    </delete>-->
+</mapper>

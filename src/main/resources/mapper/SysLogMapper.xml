@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.cj.jtsys.sys.dao.SysLogDao">
+
+    <sql id="queryWhereId">
+        from sys_logs
+        <where>
+
+        <if test="username!=null and username!=''">
+            username like concat("%",#{username},"%")
+        </if>
+        </where>
+
+    </sql>
+    
+    
+    <select id="getRowCount"
+            resultType="int">
+        select  count(*)
+       <include refid="queryWhereId"></include>
+      
+    </select>
+    <select id="findPageObjects" resultType="com.cj.jtsys.sys.entity.SysLog">
+            select *
+            <include refid="queryWhereId"></include>
+            order by createdTime desc
+            limit #{startIndex},#{pageSize}
+    </select>
+
+
+    <delete id="deleteObjects" >
+      delete  from sys_logs
+      <if test="ids==null || ids.length==0">
+      where id=-1
+      </if>
+      <if test="ids!=null and ids.length>0">
+                where id in
+--                 ids是dao上入口参数@Param定义的名字集合
+                <foreach collection="ids"
+                         open="("
+                         close=")"
+                         separator=","
+                         item="id">
+                    #{id}
+    </foreach>
+      </if>
+    </delete>
+</mapper>
